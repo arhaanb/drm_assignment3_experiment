@@ -23,7 +23,7 @@ This is a between-subjects A/B experiment built as a Next.js web app. Participan
 
 - **H1:** Dark patterns lead to lower perceived user autonomy
 - **H2:** Dark patterns lead to higher perceived manipulation and lower trust
-- **H3:** Dark patterns lead to higher cart totals (via hidden fees, pre-selected extras)
+- **H3:** Dark patterns lead to higher non-product charges (extra revenue from hidden fees, pre-selected extras — tested on extra_revenue, not raw totals, to control for cart modifications)
 
 ---
 

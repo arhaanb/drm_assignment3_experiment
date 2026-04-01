@@ -32,7 +32,9 @@ The `/insights` page is a **public, presentation-ready** summary of the experime
 - IV: Prototype type
 - DV: Cart total (Rs.)
 - Test: Welch's t-test
-- Expected: Dark pattern generates higher cart total due to hidden fees, pre-selected tips, sneaked items
+- Tested on `extra_revenue` (non-product charges), NOT raw totals — this controls for users adding/removing products
+- Expected: Dark pattern generates higher extra charges due to hidden fees, pre-selected tips, sneaked items
+- Raw order totals shown as secondary reference only
 
 ### 4. Behavioral Evidence
 - Table showing % of each group who:

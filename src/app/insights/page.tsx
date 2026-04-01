@@ -506,22 +506,23 @@ export default function InsightsPage() {
       };
     });
 
-    // H3: Cart totals
-    const darkTotals = darkDone
-      .map((r) => r.checkout?.total_amount)
-      .filter(Boolean) as number[];
-    const ethicalTotals = ethicalDone
-      .map((r) => r.checkout?.total_amount)
-      .filter(Boolean) as number[];
-    const h3Test = welchTTest(darkTotals, ethicalTotals);
-
-    // ── Extra revenue (amount above base product cost + mandatory fees) ──
+    // H3: Extra revenue is the fair comparison metric — isolates manipulation charges
+    // regardless of product additions/removals by the user
     const darkExtra = darkDone
       .map((r) => r.checkout?.extra_revenue)
       .filter((n): n is number => typeof n === "number");
     const ethicalExtra = ethicalDone
       .map((r) => r.checkout?.extra_revenue)
       .filter((n): n is number => typeof n === "number");
+    const h3Test = welchTTest(darkExtra, ethicalExtra);
+
+    // Raw totals kept as secondary reference
+    const darkTotals = darkDone
+      .map((r) => r.checkout?.total_amount)
+      .filter(Boolean) as number[];
+    const ethicalTotals = ethicalDone
+      .map((r) => r.checkout?.total_amount)
+      .filter(Boolean) as number[];
 
     // Sneaked item retention
     const darkSneakedKept = darkDone.filter(
@@ -874,6 +875,11 @@ export default function InsightsPage() {
           title="Survey Score Comparison"
           subtitle="Mean scores on 7-point Likert scale (1 = Strongly Disagree, 7 = Strongly Agree)"
         >
+          {insights.completed === 0 ? (
+            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+              Awaiting completed responses to show survey comparison.
+            </p>
+          ) : (
           <div className="h-72 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={insights.likertComparison}>
@@ -902,6 +908,7 @@ export default function InsightsPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          )}
         </Section>
 
         {/* ═══ H1: AUTONOMY ═══ */}
@@ -1013,8 +1020,13 @@ export default function InsightsPage() {
         <Section
           id="h3"
           title="H3: Revenue Impact"
-          subtitle="Do dark pattern checkouts generate higher order values?"
+          subtitle="Do dark patterns extract more money through non-product charges? (Compared using extra revenue — not raw totals — to control for cart modifications.)"
         >
+          {insights.darkCartN === 0 && insights.ethicalCartN === 0 ? (
+            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+              Awaiting completed responses to run this analysis.
+            </p>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
@@ -1022,11 +1034,11 @@ export default function InsightsPage() {
                   data={[
                     {
                       group: "Dark Pattern",
-                      total: +insights.darkCartMean.toFixed(0),
+                      extra: +insights.darkExtraMean.toFixed(0),
                     },
                     {
                       group: "Ethical",
-                      total: +insights.ethicalCartMean.toFixed(0),
+                      extra: +insights.ethicalExtraMean.toFixed(0),
                     },
                   ]}
                 >
@@ -1034,10 +1046,10 @@ export default function InsightsPage() {
                   <XAxis dataKey="group" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
-                    formatter={(value) => [`₹${value}`, "Avg Total"]}
+                    formatter={(value) => [`₹${value}`, "Avg Extra Charges"]}
                     contentStyle={{ fontSize: 12 }}
                   />
-                  <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="extra" radius={[6, 6, 0, 0]}>
                     <Cell fill={COLORS.dark} />
                     <Cell fill={COLORS.ethical} />
                   </Bar>
@@ -1048,19 +1060,25 @@ export default function InsightsPage() {
               <div className="bg-red-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500">Dark Pattern Group</p>
                 <p className="text-2xl font-bold text-red-700">
-                  ₹{fmt(insights.darkCartMean, 0)}
+                  ₹{fmt(insights.darkExtraMean, 0)}
                 </p>
                 <p className="text-xs text-gray-400">
-                  average order value ({insights.darkCartN} orders)
+                  avg extra charges per order
+                </p>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Raw order total: ₹{fmt(insights.darkCartMean, 0)} avg ({insights.darkCartN} orders)
                 </p>
               </div>
               <div className="bg-green-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500">Ethical Group</p>
                 <p className="text-2xl font-bold text-green-700">
-                  ₹{fmt(insights.ethicalCartMean, 0)}
+                  ₹{fmt(insights.ethicalExtraMean, 0)}
                 </p>
                 <p className="text-xs text-gray-400">
-                  average order value ({insights.ethicalCartN} orders)
+                  avg extra charges per order
+                </p>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Raw order total: ₹{fmt(insights.ethicalCartMean, 0)} avg ({insights.ethicalCartN} orders)
                 </p>
               </div>
               {insights.darkCartN > 0 && (
@@ -1072,20 +1090,18 @@ export default function InsightsPage() {
                   <p className={`font-semibold ${
                     insights.h3Test.significant ? "text-green-800" : "text-amber-800"
                   }`}>
-                    {insights.darkCartMean > insights.ethicalCartMean
-                      ? `Dark pattern orders are ₹${fmt(Math.abs(insights.darkCartMean - insights.ethicalCartMean), 0)} higher`
-                      : `Ethical orders are ₹${fmt(Math.abs(insights.darkCartMean - insights.ethicalCartMean), 0)} higher`}
+                    Dark patterns add ₹{fmt(Math.abs(insights.darkExtraMean - insights.ethicalExtraMean), 0)} more in non-product charges
                   </p>
                   <p className={`text-xs mt-1 ${
                     insights.h3Test.significant ? "text-green-600" : "text-amber-600"
                   }`}>
-                    This is due to sneaked items, pre-selected tips, express delivery, and surge fees
-                    in the dark pattern version. <Badge sig={insights.h3Test.significant} />
+                    Sneaked items, pre-selected tips/delivery/charity, and hidden surge fees — independent of what products the user chose. <Badge sig={insights.h3Test.significant} />
                   </p>
                 </div>
               )}
             </div>
           </div>
+          )}
         </Section>
 
         {/* ═══ EXTRA REVENUE BREAKDOWN ═══ */}
@@ -1093,6 +1109,12 @@ export default function InsightsPage() {
           title="Revenue Breakdown: Where the Extra Money Comes From"
           subtitle="Non-product charges per order: delivery fee + surge fee + tip + charity + sneaked item cost - promo discount"
         >
+          {insights.completed === 0 ? (
+            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+              Awaiting completed responses to show revenue breakdown.
+            </p>
+          ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-red-50 rounded-xl p-5 text-center">
               <p className="text-xs text-gray-500">Dark Pattern Extra</p>
@@ -1133,6 +1155,8 @@ export default function InsightsPage() {
               <li className="font-medium text-gray-600">Maximum possible dark pattern uplift: ₹112 per order</li>
             </ul>
           </div>
+          </>
+          )}
         </Section>
 
         {/* ═══ PROMO CODE ANALYSIS ═══ */}
@@ -1141,6 +1165,12 @@ export default function InsightsPage() {
           title="Promo Code Usability"
           subtitle="Dark pattern shows confusing/misleading promos; ethical shows clear, valid codes"
         >
+          {insights.completed === 0 ? (
+            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+              Awaiting completed responses to show promo analysis.
+            </p>
+          ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-red-50 rounded-xl p-4">
               <p className="text-xs text-gray-500">Dark Pattern Group</p>
@@ -1177,6 +1207,8 @@ export default function InsightsPage() {
             Higher attempt counts in the dark pattern group suggest users tried multiple misleading codes
             before finding a valid one (or gave up). This measures the friction introduced by deceptive promo design.
           </p>
+          </>
+          )}
         </Section>
 
         {/* ═══ BEHAVIORAL EVIDENCE ═══ */}
@@ -1185,6 +1217,12 @@ export default function InsightsPage() {
           title="What Users Actually Did"
           subtitle="Percentage of participants who kept pre-selected options or accepted suggestions"
         >
+          {insights.completed === 0 ? (
+            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+              Awaiting completed responses to show behavioral data.
+            </p>
+          ) : (
+          <>
           <div className="space-y-4">
             {insights.behavioralRows.map((row) => {
               const darkPct = row.darkTotal ? Math.round((row.dark / row.darkTotal) * 100) : 0;
@@ -1241,6 +1279,8 @@ export default function InsightsPage() {
             In the dark pattern version, express delivery, tip, and charity were pre-selected.
             In the ethical version, these were opt-in with equal-weight choices.
           </p>
+          </>
+          )}
         </Section>
 
         {/* ═══ SCREEN TIMING ═══ */}
