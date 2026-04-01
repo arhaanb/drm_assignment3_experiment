@@ -1050,45 +1050,59 @@ function AdminDashboard() {
             { title: "Gender", data: stats.genders },
             { title: "Device Type", data: stats.deviceTypes },
             { title: "Browser", data: stats.browsers },
-          ].map((chart) => (
-            <section
-              key={chart.title}
-              className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6"
-            >
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">
-                {chart.title}
-              </h2>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chart.data}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={60}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, percent }) =>
-                        `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                      }
-                    >
-                      {chart.data.map((_, i) => (
-                        <Cell
-                          key={i}
-                          fill={PIE_COLORS[i % PIE_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [value, "Count"]}
-                      contentStyle={{ fontSize: 12 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-          ))}
+          ].map((chart) => {
+            const total = chart.data.reduce((s, d) => s + d.value, 0);
+            return (
+              <section
+                key={chart.title}
+                className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6"
+              >
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">
+                  {chart.title}
+                </h2>
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chart.data}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={60}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {chart.data.map((_, i) => (
+                          <Cell
+                            key={i}
+                            fill={PIE_COLORS[i % PIE_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => [value, "Count"]}
+                        contentStyle={{ fontSize: 12 }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                  {chart.data.map((d, i) => (
+                    <div key={d.name} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
+                      />
+                      <span>{d.name}</span>
+                      <span className="text-gray-400">
+                        {total ? `${Math.round((d.value / total) * 100)}%` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
 
         {/* ─── Participants Table ──────────────────── */}

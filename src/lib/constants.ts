@@ -94,7 +94,7 @@ export const BASE_CART_ITEMS: CartItem[] = [
   },
 ];
 
-// Subtotal of base cart: ₹535
+// Subtotal of base cart: ₹669 (includes quantities: onion x2, milk x2, potato x2)
 export const BASE_SUBTOTAL = BASE_CART_ITEMS.reduce(
   (sum, item) => sum + item.price * item.quantity,
   0
@@ -171,6 +171,34 @@ export const DEFAULT_TIP_ETHICAL = 0; // starts at 0 in ethical
 // Charity
 export const CHARITY_AMOUNT = 2;
 export const CHARITY_NAME = "Feeding India";
+
+// The "fair" baseline = base subtotal + platform fee + handling fee (no dark extras)
+// Any amount above this in the dark pattern group is "extra revenue" from manipulation
+export const ETHICAL_BASELINE_FEES = FEES.platformFee + FEES.handlingFee; // ₹9
+
+// Promo codes
+export type PromoCode = {
+  code: string;
+  discount: number;
+  label: string;
+  minOrder: number;
+  valid: boolean;
+  failReason?: string; // shown when code fails (dark pattern uses confusing reasons)
+};
+
+// Ethical: simple, clearly labeled promos
+export const ETHICAL_PROMOS: PromoCode[] = [
+  { code: "SAVE20", discount: 20, label: "₹20 off on orders above ₹500", minOrder: 500, valid: true },
+  { code: "FIRST50", discount: 50, label: "₹50 off your first order", minOrder: 400, valid: true },
+];
+
+// Dark pattern: confusing codes — one valid buried among misleading/expired ones
+export const DARK_PROMOS: PromoCode[] = [
+  { code: "FLAT200", discount: 0, label: "Flat ₹200 off!", minOrder: 2000, valid: false, failReason: "Minimum order of ₹2,000 required for this code" },
+  { code: "DEAL99", discount: 0, label: "₹99 off — LIMITED!", minOrder: 500, valid: false, failReason: "This offer has expired. Try another code!" },
+  { code: "SAVE20", discount: 20, label: "₹20 off on ₹500+", minOrder: 500, valid: true }, // only real one
+  { code: "MEGA50", discount: 0, label: "₹50 off — Apply now!", minOrder: 999, valid: false, failReason: "Only valid on orders above ₹999" },
+];
 
 // Delivery options
 export const DELIVERY_OPTIONS = {

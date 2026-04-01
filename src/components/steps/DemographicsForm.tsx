@@ -13,7 +13,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useExperimentStore, AssignedGroup } from "@/lib/store";
-import { trackDeviceInfo } from "@/lib/tracking";
+import {
+  trackDeviceInfo,
+  trackScreenEntry,
+  trackEvent,
+} from "@/lib/tracking";
 import { toast } from "sonner";
 
 const AGE_RANGES = [
@@ -82,6 +86,7 @@ export function DemographicsForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+  const [demoEnteredAt] = useState(Date.now());
 
   const occupation =
     form.occupation === "other" ? form.occupationOther : form.occupation;
@@ -128,12 +133,20 @@ export function DemographicsForm() {
     setError("");
 
     try {
-      // Alternate assignment based on existing participant count for balance
-      const { count } = await supabase
-        .from("participants")
-        .select("*", { count: "exact", head: true });
+      // Alternate group based on last completed session's group
+      // This ensures balanced groups even if some participants drop out
+      const { data: lastCompleted } = await supabase
+        .from("sessions")
+        .select("assigned_group")
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .single();
+
       const group: AssignedGroup =
-        (count ?? 0) % 2 === 0 ? "dark_pattern" : "ethical";
+        lastCompleted?.assigned_group === "dark_pattern"
+          ? "ethical"
+          : "dark_pattern";
 
       // Parse age from range (use midpoint for storage)
       const ageMid: Record<string, number> = {
@@ -181,6 +194,29 @@ export function DemographicsForm() {
 
       // Track device / browser info for this session
       trackDeviceInfo(session.id);
+
+      // Retroactively track pre-session screen times (consent + demographics)
+      const consentDur = parseFloat(
+        localStorage.getItem("drm_consent_duration") || "0"
+      );
+      if (consentDur > 0) {
+        trackScreenEntry(session.id, "consent");
+        trackEvent({
+          session_id: session.id,
+          event_type: "screen_exit",
+          screen: "consent",
+          metadata: { duration_seconds: consentDur },
+        });
+      }
+      trackScreenEntry(session.id, "demographics");
+      trackEvent({
+        session_id: session.id,
+        event_type: "screen_exit",
+        screen: "demographics",
+        metadata: {
+          duration_seconds: (Date.now() - demoEnteredAt) / 1000,
+        },
+      });
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");

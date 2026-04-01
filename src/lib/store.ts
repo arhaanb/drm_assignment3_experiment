@@ -52,6 +52,11 @@ interface ExperimentState {
   charityOptIn: boolean;
   setCharityOptIn: (optIn: boolean) => void;
 
+  // Promo
+  promoDiscount: number;
+  promoCode: string | null;
+  setPromo: (code: string | null, discount: number) => void;
+
   // Addon tracking
   addonsAccepted: number;
   addonsDeclined: number;
@@ -65,6 +70,7 @@ interface ExperimentState {
   getHandlingFee: () => number;
   getSurgeFee: () => number;
   getCharityAmount: () => number;
+  getPromoDiscount: () => number;
   getTotal: () => number;
 
   // Screen timing
@@ -92,6 +98,8 @@ export const useExperimentStore = create<ExperimentState>()(
       deliveryOption: "standard",
       tipAmount: 0,
       charityOptIn: false,
+      promoDiscount: 0,
+      promoCode: null,
       addonsAccepted: 0,
       addonsDeclined: 0,
       screenEnteredAt: null,
@@ -133,6 +141,8 @@ export const useExperimentStore = create<ExperimentState>()(
       setDeliveryOption: (option) => set({ deliveryOption: option }),
       setTipAmount: (amount) => set({ tipAmount: amount }),
       setCharityOptIn: (optIn) => set({ charityOptIn: optIn }),
+      setPromo: (code, discount) =>
+        set({ promoCode: code, promoDiscount: discount }),
       incrementAddonsAccepted: () =>
         set((s) => ({ addonsAccepted: s.addonsAccepted + 1 })),
       incrementAddonsDeclined: () =>
@@ -158,16 +168,20 @@ export const useExperimentStore = create<ExperimentState>()(
       getCharityAmount: () =>
         get().charityOptIn ? CHARITY_AMOUNT : 0,
 
+      getPromoDiscount: () => get().promoDiscount,
+
       getTotal: () => {
         const state = get();
-        return (
+        return Math.max(
+          0,
           state.getSubtotal() +
-          state.getDeliveryFee() +
-          state.getPlatformFee() +
-          state.getHandlingFee() +
-          state.getSurgeFee() +
-          state.tipAmount +
-          state.getCharityAmount()
+            state.getDeliveryFee() +
+            state.getPlatformFee() +
+            state.getHandlingFee() +
+            state.getSurgeFee() +
+            state.tipAmount +
+            state.getCharityAmount() -
+            state.getPromoDiscount()
         );
       },
 
@@ -190,8 +204,11 @@ export const useExperimentStore = create<ExperimentState>()(
           tipAmount:
             group === "dark_pattern" ? DEFAULT_TIP_DARK : DEFAULT_TIP_ETHICAL,
           charityOptIn: group === "dark_pattern" ? true : false,
+          promoDiscount: 0,
+          promoCode: null,
           addonsAccepted: 0,
           addonsDeclined: 0,
+          screenEnteredAt: null,
         });
       },
 
@@ -205,6 +222,8 @@ export const useExperimentStore = create<ExperimentState>()(
           deliveryOption: "standard",
           tipAmount: 0,
           charityOptIn: false,
+          promoDiscount: 0,
+          promoCode: null,
           addonsAccepted: 0,
           addonsDeclined: 0,
           screenEnteredAt: null,

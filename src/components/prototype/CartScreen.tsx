@@ -32,8 +32,12 @@ export function CartScreen() {
     if (sessionId) {
       trackScreenEntry(sessionId, "cart");
       setScreenEnteredAt(Date.now());
+      if (isDark) {
+        trackTap(sessionId, "cart", "urgency_banner_shown");
+        trackTap(sessionId, "cart", "free_delivery_nudge_shown");
+      }
     }
-  }, [sessionId, setScreenEnteredAt]);
+  }, [sessionId, isDark, setScreenEnteredAt]);
 
   function handleNext() {
     if (sessionId) {

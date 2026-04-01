@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -11,8 +11,18 @@ import { toast } from "sonner";
 export function ConsentScreen() {
   const setStep = useExperimentStore((s) => s.setStep);
   const [consented, setConsented] = useState(false);
+  const [enteredAt] = useState(Date.now());
+
+  // Store consent entry time (no session exists yet, so use localStorage)
+  useEffect(() => {
+    localStorage.setItem("drm_consent_entered", String(Date.now()));
+  }, []);
 
   function handleContinue() {
+    localStorage.setItem(
+      "drm_consent_duration",
+      String((Date.now() - enteredAt) / 1000)
+    );
     if (!consented) {
       toast.error("Please check the consent box to continue.");
       document.getElementById("consent-checkbox")?.scrollIntoView({

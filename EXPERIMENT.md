@@ -15,7 +15,7 @@ This is a between-subjects A/B experiment built as a Next.js web app. Participan
 |--------|--------|
 | **Type** | Between-subjects A/B experiment |
 | **Groups** | Control (Dark Pattern) vs. Treatment (Ethical Alternative) |
-| **Assignment** | Random (50/50) at demographics submission |
+| **Assignment** | Alternating based on last completed session (ensures balance even with dropouts) |
 | **Target N** | 20-30 participants |
 | **Context** | Simulated Indian quick commerce grocery checkout |
 
@@ -61,7 +61,7 @@ Mobile-native checkout flow styled after Zepto/Blinkit. See feature comparison b
 | Harvest Gold White Bread | 1 pack | ₹40 |
 | Fortune Sunflower Oil | 1 L pouch | ₹155 |
 
-**Base Subtotal: ₹535**
+**Base Subtotal: ₹669** (includes quantities: onion x2, milk x2, potato x2)
 
 ### Add-on Items Shown
 
@@ -108,6 +108,7 @@ Mobile-native checkout flow styled after Zepto/Blinkit. See feature comparison b
 | **Fee breakdown** | Hidden behind "View details ›" toggle (collapsed by default) | Fully visible by default |
 | **Surge fee** | ₹10 "high demand" fee (hidden in details) | No surge fee |
 | **Urgency** | Red countdown bar: "Order in 2:00" | No countdown |
+| **Promo codes** | 4 codes shown as cards — 3 are misleading (impossible min order / expired), 1 valid (₹20 off) | 2 clearly labeled valid codes + text input. "Codes available!" badge |
 
 ### Fees Summary
 
@@ -144,6 +145,13 @@ Every user action is logged with: session_id, event_type, event_target, event_va
 | `popup_shown` | Upsell/nag popup displayed | addons |
 | `popup_accepted` | User accepted popup offer | addons |
 | `popup_dismissed` | User dismissed popup | addons |
+| `device_info` | Browser, OS, screen size, touch, viewport | init |
+| `urgency_banner_shown` | Dark pattern urgency banner displayed | cart |
+| `free_delivery_nudge_shown` | Dark pattern upsell nudge displayed | cart |
+| `promo_attempt` | User tried to apply a promo code | checkout |
+| `promo_applied` | Promo code successfully applied (with discount) | checkout |
+| `promo_failed` | Promo code was invalid/expired/min not met | checkout |
+| `promo_removed` | User removed an applied promo | checkout |
 
 ### Checkout Data (stored in `checkout_data` table)
 
@@ -163,6 +171,11 @@ Captured at order placement:
 | items_in_cart | Total item count |
 | addons_accepted | Count of add-ons accepted |
 | addons_declined | Count of add-ons declined |
+| extra_revenue | Non-product charges: delivery + surge + tip + charity + sneaked item - promo |
+| sneaked_item_kept | Whether dark pattern's auto-added Dahi was still in cart |
+| promo_code | Which promo code was applied (null if none) |
+| promo_discount | Discount amount from promo (0 if none) |
+| promo_attempts | Number of promo code attempts before checkout |
 
 ### Derived Metrics (for analysis)
 
@@ -172,7 +185,7 @@ Captured at order placement:
 | **Time per screen** | screen_exit.duration_seconds |
 | **Hesitation time** | Time between last cart_add/checkout interaction and place_order |
 | **Total taps** | COUNT interactions WHERE event_type = 'tap' |
-| **Cart value uplift** | total_amount - base_subtotal (₹535) |
+| **Cart value uplift** | total_amount - base_subtotal (₹669) |
 | **Fee awareness** | Did user expand fee details? (fee_details_toggle event) |
 | **Tip acceptance rate** | % with tip > 0 per group |
 | **Charity opt-in rate** | % with charity > 0 per group |
@@ -180,6 +193,10 @@ Captured at order placement:
 | **Addon acceptance rate** | addons_accepted / (addons_accepted + addons_declined) |
 | **Sneaked item removal** | Did dark pattern user remove the auto-added Dahi? |
 | **Popup interaction** | How many popups dismissed vs accepted |
+| **Extra revenue** | extra_revenue field: delivery + surge + tip + charity + sneaked item - promo |
+| **Promo success rate** | % who applied a valid promo per group |
+| **Promo friction** | Avg promo_attempts per group (dark has misleading codes) |
+| **Device type** | Mobile vs desktop vs tablet per group |
 
 ---
 

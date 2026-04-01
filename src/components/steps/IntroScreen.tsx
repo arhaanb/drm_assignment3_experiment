@@ -3,17 +3,25 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useExperimentStore } from "@/lib/store";
-import { trackScreenEntry } from "@/lib/tracking";
-import { useEffect } from "react";
+import { trackScreenEntry, trackScreenExit } from "@/lib/tracking";
+import { useState, useEffect } from "react";
 
 export function IntroScreen() {
   const { sessionId, setStep } = useExperimentStore();
+  const [enteredAt] = useState(Date.now());
 
   useEffect(() => {
     if (sessionId) {
       trackScreenEntry(sessionId, "intro");
     }
   }, [sessionId]);
+
+  function handleStart() {
+    if (sessionId) {
+      trackScreenExit(sessionId, "intro", enteredAt);
+    }
+    setStep("cart");
+  }
 
   return (
     <div className="w-full max-w-lg mx-auto p-4 py-12">
@@ -36,7 +44,7 @@ export function IntroScreen() {
           <Button
             className="w-full bg-[#7B2D8E] hover:bg-[#6A2579] text-white cursor-pointer"
             size="lg"
-            onClick={() => setStep("cart")}
+            onClick={handleStart}
           >
             Open the App →
           </Button>

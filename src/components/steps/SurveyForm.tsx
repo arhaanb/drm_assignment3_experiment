@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
 import { useExperimentStore } from "@/lib/store";
-import { trackScreenEntry, trackTap } from "@/lib/tracking";
+import { trackScreenEntry, trackScreenExit, trackTap } from "@/lib/tracking";
 
 const LIKERT_LABELS = [
   "Strongly Disagree",
@@ -53,6 +53,7 @@ const LIKERT_QUESTIONS = [
 
 export function SurveyForm() {
   const { sessionId, setStep } = useExperimentStore();
+  const [surveyEnteredAt] = useState(Date.now());
 
   const [likertAnswers, setLikertAnswers] = useState<Record<string, number>>(
     {}
@@ -86,6 +87,7 @@ export function SurveyForm() {
 
     try {
       if (sessionId) {
+        trackScreenExit(sessionId, "survey", surveyEnteredAt);
         trackTap(sessionId, "survey", "submit_survey");
       }
 

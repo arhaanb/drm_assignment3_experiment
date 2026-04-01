@@ -13,6 +13,9 @@ import {
   CHARITY_AMOUNT,
   CHARITY_NAME,
   FEES,
+  DARK_PROMOS,
+  ETHICAL_PROMOS,
+  PromoCode,
 } from "@/lib/constants";
 import {
   trackScreenEntry,
@@ -38,6 +41,9 @@ export function CheckoutScreen() {
     getSurgeFee,
     getCharityAmount,
     getTotal,
+    getPromoDiscount,
+    promoCode,
+    setPromo,
     addonsAccepted,
     addonsDeclined,
     setStep,
@@ -45,10 +51,14 @@ export function CheckoutScreen() {
   } = useExperimentStore();
 
   const isDark = assignedGroup === "dark_pattern";
+  const promos: PromoCode[] = isDark ? DARK_PROMOS : ETHICAL_PROMOS;
   const [enteredAt] = useState(Date.now());
   const [showFeeDetails, setShowFeeDetails] = useState(!isDark);
   const [countdown, setCountdown] = useState(120); // 2 min countdown for dark
   const [placing, setPlacing] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoAttempts, setPromoAttempts] = useState(0);
 
   useEffect(() => {
     if (sessionId) {
@@ -88,6 +98,44 @@ export function CheckoutScreen() {
     setCharityOptIn(newVal);
   }
 
+  function handleApplyPromo(code: string) {
+    setPromoAttempts((n) => n + 1);
+    const match = promos.find(
+      (p) => p.code.toLowerCase() === code.trim().toLowerCase()
+    );
+    if (sessionId) {
+      trackTap(sessionId, "checkout", "promo_attempt", code.trim());
+    }
+    if (!match) {
+      setPromoError("Invalid promo code");
+      if (sessionId) trackTap(sessionId, "checkout", "promo_invalid", code.trim());
+      return;
+    }
+    if (!match.valid) {
+      setPromoError(match.failReason || "This code is no longer valid");
+      if (sessionId) trackTap(sessionId, "checkout", "promo_failed", code.trim());
+      return;
+    }
+    if (getSubtotal() < match.minOrder) {
+      setPromoError(`Minimum order ₹${match.minOrder} required`);
+      if (sessionId) trackTap(sessionId, "checkout", "promo_min_not_met", code.trim());
+      return;
+    }
+    setPromo(match.code, match.discount);
+    setPromoError("");
+    setPromoInput("");
+    if (sessionId) {
+      trackTap(sessionId, "checkout", "promo_applied", `${match.code}:-${match.discount}`);
+    }
+  }
+
+  function handleRemovePromo() {
+    if (sessionId) {
+      trackTap(sessionId, "checkout", "promo_removed", promoCode || "");
+    }
+    setPromo(null, 0);
+  }
+
   function handleToggleFeeDetails() {
     setShowFeeDetails(!showFeeDetails);
     if (sessionId) {
@@ -107,21 +155,41 @@ export function CheckoutScreen() {
       trackScreenExit(sessionId, "checkout", enteredAt);
       trackTap(sessionId, "checkout", "place_order", String(getTotal()));
 
+      const totalAmount = getTotal();
+      const subtotal = getSubtotal();
+      const sneakedKept = cartItems.some((i) => i.id === "curd");
+      const sneakedCost = sneakedKept ? 35 : 0;
+
+      // Extra revenue = all non-product charges + sneaked item cost
+      // This is independent of cart modifications — directly sums manipulation-driven charges
+      const extraRevenue =
+        getDeliveryFee() +
+        getSurgeFee() +
+        tipAmount +
+        getCharityAmount() +
+        sneakedCost -
+        getPromoDiscount();
+
       // Save checkout data
       await supabase.from("checkout_data").insert({
         session_id: sessionId,
-        subtotal: getSubtotal(),
+        subtotal,
         delivery_fee: getDeliveryFee(),
         platform_fee: getPlatformFee(),
         handling_fee: getHandlingFee(),
         surge_fee: getSurgeFee(),
         tip_amount: tipAmount,
         charity_amount: getCharityAmount(),
-        total_amount: getTotal(),
+        total_amount: totalAmount,
         delivery_option: deliveryOption,
         items_in_cart: cartItems.reduce((s, i) => s + i.quantity, 0),
         addons_accepted: addonsAccepted,
         addons_declined: addonsDeclined,
+        extra_revenue: extraRevenue,
+        sneaked_item_kept: sneakedKept,
+        promo_code: promoCode || null,
+        promo_discount: getPromoDiscount(),
+        promo_attempts: promoAttempts,
       });
     }
     setStep("confirmation");
@@ -137,6 +205,9 @@ export function CheckoutScreen() {
     getSurgeFee,
     tipAmount,
     getCharityAmount,
+    getPromoDiscount,
+    promoCode,
+    promoAttempts,
     deliveryOption,
     cartItems,
     addonsAccepted,
@@ -150,6 +221,7 @@ export function CheckoutScreen() {
   const handlingFee = getHandlingFee();
   const surgeFee = getSurgeFee();
   const charityAmount = getCharityAmount();
+  const promoDiscount = getPromoDiscount();
   const total = getTotal();
 
   const formatTime = (s: number) =>
@@ -378,6 +450,121 @@ export function CheckoutScreen() {
 
         <Separator className="my-4" />
 
+        {/* Promo code section */}
+        <div className="px-4">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900">
+              {isDark ? "Have a coupon?" : "Apply a promo code"}
+            </h3>
+            {!isDark && !promoCode && (
+              <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full animate-pulse">
+                Codes available!
+              </span>
+            )}
+          </div>
+          {promoCode ? (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl p-3">
+              <div>
+                <p className="text-sm font-semibold text-green-700">
+                  {promoCode} applied
+                </p>
+                <p className="text-xs text-green-600">
+                  -₹{getPromoDiscount()} off your order
+                </p>
+              </div>
+              <button
+                className="text-xs text-red-500 hover:text-red-600 cursor-pointer"
+                onClick={handleRemovePromo}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <>
+              {isDark ? (
+                /* Dark: show misleading promo cards first, input buried below */
+                <div className="space-y-2">
+                  {promos.map((p) => (
+                    <button
+                      key={p.code}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left transition-all ${
+                        !p.valid
+                          ? "border-orange-200 bg-orange-50"
+                          : "border-green-200 bg-green-50"
+                      }`}
+                      onClick={() => handleApplyPromo(p.code)}
+                    >
+                      <div>
+                        <p className="text-xs font-semibold text-gray-800">
+                          {p.label}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          Code: {p.code}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-[#7B2D8E] shrink-0">
+                        APPLY
+                      </span>
+                    </button>
+                  ))}
+                  {promoError && (
+                    <p className="text-xs text-red-500">{promoError}</p>
+                  )}
+                </div>
+              ) : (
+                /* Ethical: simple input + available codes listed clearly */
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter code"
+                      value={promoInput}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value.toUpperCase());
+                        setPromoError("");
+                      }}
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#7B2D8E]"
+                    />
+                    <button
+                      className="bg-[#7B2D8E] text-white text-xs font-semibold px-4 rounded-lg cursor-pointer"
+                      onClick={() => handleApplyPromo(promoInput)}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {promoError && (
+                    <p className="text-xs text-red-500">{promoError}</p>
+                  )}
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Available codes:</p>
+                    {promos.filter((p) => p.valid).map((p) => (
+                      <button
+                        key={p.code}
+                        className="flex items-center justify-between w-full bg-gray-50 rounded-lg p-2 text-left cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleApplyPromo(p.code)}
+                      >
+                        <div>
+                          <span className="text-xs font-semibold text-gray-800">
+                            {p.code}
+                          </span>
+                          <span className="text-xs text-gray-500 ml-2">
+                            {p.label}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-[#7B2D8E] font-medium">
+                          TAP TO APPLY
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <Separator className="my-4" />
+
         {/* Bill details */}
         <div className="px-4">
           <div className="flex items-center justify-between mb-3">
@@ -451,6 +638,13 @@ export function CheckoutScreen() {
               <div className="flex justify-between">
                 <span className="text-gray-600">{CHARITY_NAME} donation</span>
                 <span className="text-gray-900">₹{charityAmount}</span>
+              </div>
+            )}
+
+            {promoDiscount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-green-600">Promo ({promoCode})</span>
+                <span className="text-green-600 font-medium">-₹{promoDiscount}</span>
               </div>
             )}
 
