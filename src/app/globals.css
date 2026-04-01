@@ -1,4 +1,9 @@
 @import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 3.5rem;
+}
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
