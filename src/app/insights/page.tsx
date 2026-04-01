@@ -885,7 +885,7 @@ export default function InsightsPage() {
                   textAnchor="end"
                   height={50}
                 />
-                <YAxis domain={[1, 7]} tick={{ fontSize: 11 }} />
+                <YAxis domain={[1, 7]} allowDataOverflow tick={{ fontSize: 11 }} ticks={[1, 2, 3, 4, 5, 6, 7]} />
                 <Tooltip contentStyle={{ fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <ReferenceLine y={4} stroke={COLORS.neutral} strokeDasharray="4 4" label={{ value: "Neutral", position: "right", fontSize: 10, fill: "#94a3b8" }} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useExperimentStore } from "@/lib/store";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ConsentScreen } from "@/components/steps/ConsentScreen";
@@ -15,6 +16,14 @@ import { CompleteScreen } from "@/components/steps/CompleteScreen";
 export default function Home() {
   const { currentStep, reset } = useExperimentStore();
   const isDev = process.env.NODE_ENV === "development";
+
+  // If a previous participant completed and this is a fresh page load, reset
+  useEffect(() => {
+    if (localStorage.getItem("drm_completed") === "true") {
+      localStorage.removeItem("drm_completed");
+      reset();
+    }
+  }, [reset]);
 
   return (
     <main className="flex-1 flex flex-col items-center min-h-screen">

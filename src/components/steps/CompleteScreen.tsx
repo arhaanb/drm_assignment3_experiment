@@ -12,13 +12,12 @@ export function CompleteScreen() {
     if (sessionId) {
       trackScreenEntry(sessionId, "complete");
     }
-    // Reset store so reloading the page starts fresh
-    // Use a small delay to ensure tracking event is sent first
-    const timer = setTimeout(() => {
-      reset();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [sessionId, reset]);
+  }, [sessionId]);
+
+  // Flag that experiment is done — page.tsx checks this on load
+  useEffect(() => {
+    localStorage.setItem("drm_completed", "true");
+  }, []);
 
   return (
     <div className="w-full max-w-lg mx-auto p-4 py-12">
