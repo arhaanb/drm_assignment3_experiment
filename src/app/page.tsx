@@ -1,6 +1,7 @@
 "use client";
 
 import { useExperimentStore } from "@/lib/store";
+import { ProgressBar } from "@/components/ProgressBar";
 import { ConsentScreen } from "@/components/steps/ConsentScreen";
 import { DemographicsForm } from "@/components/steps/DemographicsForm";
 import { IntroScreen } from "@/components/steps/IntroScreen";
@@ -12,10 +13,12 @@ import { SurveyForm } from "@/components/steps/SurveyForm";
 import { CompleteScreen } from "@/components/steps/CompleteScreen";
 
 export default function Home() {
-  const currentStep = useExperimentStore((s) => s.currentStep);
+  const { currentStep, reset } = useExperimentStore();
+  const isDev = process.env.NODE_ENV === "development";
 
   return (
-    <main className="flex-1 flex items-start justify-center min-h-screen">
+    <main className="flex-1 flex flex-col items-center min-h-screen">
+      <ProgressBar />
       {currentStep === "consent" && <ConsentScreen />}
       {currentStep === "demographics" && <DemographicsForm />}
       {currentStep === "intro" && <IntroScreen />}
@@ -25,6 +28,14 @@ export default function Home() {
       {currentStep === "confirmation" && <ConfirmationScreen />}
       {currentStep === "survey" && <SurveyForm />}
       {currentStep === "complete" && <CompleteScreen />}
+      {isDev && (
+        <button
+          onClick={reset}
+          className="fixed bottom-4 right-4 z-50 bg-red-500 text-white text-xs px-3 py-1.5 rounded-full shadow-lg hover:bg-red-600 cursor-pointer"
+        >
+          Reset
+        </button>
+      )}
     </main>
   );
 }

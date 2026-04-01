@@ -302,12 +302,24 @@ export function AddonsScreen() {
 
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 max-w-[420px] mx-auto bg-white border-t border-gray-200 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
-        <Button
-          className="w-full bg-[#7B2D8E] hover:bg-[#6A2579] text-white py-3 rounded-xl text-base font-semibold"
-          onClick={handleNext}
-        >
-          Continue to Checkout →
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="px-4 py-3 rounded-xl"
+            onClick={() => {
+              if (sessionId) trackScreenExit(sessionId, "addons", enteredAt);
+              setStep("cart");
+            }}
+          >
+            ←
+          </Button>
+          <Button
+            className="flex-1 bg-[#7B2D8E] hover:bg-[#6A2579] text-white py-3 rounded-xl text-base font-semibold"
+            onClick={handleNext}
+          >
+            Continue to Checkout →
+          </Button>
+        </div>
       </div>
     </MobileShell>
   );

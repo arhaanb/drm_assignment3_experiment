@@ -9,7 +9,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
@@ -59,8 +58,15 @@ const USAGE_FREQUENCIES = [
   { value: "never", label: "Never" },
 ];
 
+function lookup(
+  arr: readonly { value: string; label: string }[],
+  val: string
+) {
+  return arr.find((a) => a.value === val)?.label ?? "";
+}
+
 export function DemographicsForm() {
-  const initExperiment = useExperimentStore((s) => s.initExperiment);
+  const { initExperiment, setStep } = useExperimentStore();
 
   const [form, setForm] = useState({
     name: "",
@@ -220,7 +226,9 @@ export function DemographicsForm() {
                 onValueChange={(v) => v && setForm({ ...form, ageRange: v })}
               >
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Select age range" />
+                  <span className={`text-sm truncate ${!form.ageRange ? "text-muted-foreground" : ""}`}>
+                    {form.ageRange || "Select age range"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {AGE_RANGES.map((range) => (
@@ -239,7 +247,9 @@ export function DemographicsForm() {
                 onValueChange={(v) => v && setForm({ ...form, gender: v })}
               >
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Select gender" />
+                  <span className={`text-sm truncate ${!form.gender ? "text-muted-foreground" : ""}`}>
+                    {lookup(GENDERS, form.gender) || "Select gender"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {GENDERS.map((g) => (
@@ -258,7 +268,9 @@ export function DemographicsForm() {
                 onValueChange={(v) => v && setForm({ ...form, occupation: v })}
               >
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Select occupation" />
+                  <span className={`text-sm truncate ${!form.occupation ? "text-muted-foreground" : ""}`}>
+                    {lookup(OCCUPATIONS, form.occupation) || "Select occupation"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {OCCUPATIONS.map((o) => (
@@ -290,7 +302,9 @@ export function DemographicsForm() {
                 }
               >
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Select range" />
+                  <span className={`text-sm truncate ${!form.monthlySpending ? "text-muted-foreground" : ""}`}>
+                    {lookup(SPENDING_RANGES, form.monthlySpending) || "Select range"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {SPENDING_RANGES.map((s) => (
@@ -313,7 +327,9 @@ export function DemographicsForm() {
                 }
               >
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Select frequency" />
+                  <span className={`text-sm truncate ${!form.quickCommerceUsage ? "text-muted-foreground" : ""}`}>
+                    {lookup(USAGE_FREQUENCIES, form.quickCommerceUsage) || "Select frequency"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {USAGE_FREQUENCIES.map((u) => (
@@ -331,13 +347,23 @@ export function DemographicsForm() {
               </p>
             )}
 
-            <Button
-              type="submit"
-              className="w-full bg-[#7B2D8E] hover:bg-[#6A2579] text-white cursor-pointer"
-              disabled={loading}
-            >
-              {loading ? "Setting up..." : "Continue →"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => setStep("consent")}
+              >
+                ← Back
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-[#7B2D8E] hover:bg-[#6A2579] text-white cursor-pointer"
+                disabled={loading}
+              >
+                {loading ? "Setting up..." : "Continue →"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

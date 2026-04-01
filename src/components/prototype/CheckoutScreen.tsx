@@ -467,9 +467,22 @@ export function CheckoutScreen() {
       {/* Bottom bar - Place order */}
       <div className="fixed bottom-0 left-0 right-0 max-w-[420px] mx-auto bg-white border-t border-gray-200 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-lg font-bold text-gray-900">₹{total}</p>
-            <p className="text-xs text-gray-500">Total amount</p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="px-3 rounded-xl"
+              onClick={() => {
+                if (sessionId) trackScreenExit(sessionId, "checkout", enteredAt);
+                setStep("cart");
+              }}
+            >
+              ←
+            </Button>
+            <div>
+              <p className="text-lg font-bold text-gray-900">₹{total}</p>
+              <p className="text-xs text-gray-500">Total amount</p>
+            </div>
           </div>
           <Button
             className="bg-[#7B2D8E] hover:bg-[#6A2579] text-white px-8 py-3 rounded-xl text-base font-semibold"
