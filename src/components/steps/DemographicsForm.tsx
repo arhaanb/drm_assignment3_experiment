@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useExperimentStore, AssignedGroup } from "@/lib/store";
+import { trackDeviceInfo } from "@/lib/tracking";
 import { toast } from "sonner";
 
 const AGE_RANGES = [
@@ -177,6 +178,9 @@ export function DemographicsForm() {
 
       // Initialize store with participant + session + group
       initExperiment(participant.id, session.id, group);
+
+      // Track device / browser info for this session
+      trackDeviceInfo(session.id);
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");

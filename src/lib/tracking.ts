@@ -146,6 +146,51 @@ export function trackAddon(
   });
 }
 
+// Track device / browser info (called once per session)
+export function trackDeviceInfo(sessionId: string) {
+  const ua = navigator.userAgent;
+  const isMobile = /Mobile|Android|iPhone|iPod/i.test(ua);
+  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
+
+  // Parse browser
+  let browser = "Unknown";
+  if (/CriOS|Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome";
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+  else if (/Firefox|FxiOS/i.test(ua)) browser = "Firefox";
+  else if (/Edg/i.test(ua)) browser = "Edge";
+  else if (/OPR|Opera/i.test(ua)) browser = "Opera";
+
+  // Parse OS
+  let os = "Unknown";
+  if (/Windows/i.test(ua)) os = "Windows";
+  else if (/Mac OS X|Macintosh/i.test(ua)) os = "macOS";
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+  else if (/Android/i.test(ua)) os = "Android";
+  else if (/Linux/i.test(ua)) os = "Linux";
+
+  trackEvent({
+    session_id: sessionId,
+    event_type: "device_info",
+    screen: "init",
+    metadata: {
+      user_agent: ua,
+      device_type: isTablet ? "tablet" : isMobile ? "mobile" : "desktop",
+      browser,
+      os,
+      screen_width: window.screen.width,
+      screen_height: window.screen.height,
+      viewport_width: window.innerWidth,
+      viewport_height: window.innerHeight,
+      pixel_ratio: window.devicePixelRatio,
+      touch_support: "ontouchstart" in window,
+      language: navigator.language,
+      connection:
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (navigator as any).connection?.effectiveType ?? "unknown",
+    },
+  });
+}
+
 // Track popup interactions (dark pattern specific)
 export function trackPopup(
   sessionId: string,
