@@ -239,30 +239,32 @@ function Section({
   title,
   subtitle,
   children,
+  dark,
 }: {
   id?: string;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  dark?: boolean;
 }) {
   return (
-    <section id={id} className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-8">
-      <h2 className="text-base sm:text-lg font-bold text-gray-900">{title}</h2>
+    <section id={id} className={`rounded-2xl border p-5 sm:p-8 ${dark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}>
+      <h2 className={`text-base sm:text-lg font-bold ${dark ? "text-gray-100" : "text-gray-900"}`}>{title}</h2>
       {subtitle && (
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">{subtitle}</p>
+        <p className={`text-xs sm:text-sm mt-1 ${dark ? "text-gray-400" : "text-gray-500"}`}>{subtitle}</p>
       )}
       <div className="mt-5">{children}</div>
     </section>
   );
 }
 
-function Badge({ sig }: { sig: boolean }) {
+function Badge({ sig, dark }: { sig: boolean; dark?: boolean }) {
   return sig ? (
-    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${dark ? "bg-green-900/50 text-green-400" : "bg-green-100 text-green-700"}`}>
       Statistically significant
     </span>
   ) : (
-    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${dark ? "bg-gray-800 text-gray-400" : "bg-gray-100 text-gray-500"}`}>
       Not significant
     </span>
   );
@@ -274,20 +276,24 @@ function ComparisonBar({
   darkVal,
   ethicalVal,
   higher,
+  dark,
 }: {
   label: string;
   darkVal: number;
   ethicalVal: number;
   higher: "dark" | "ethical" | "equal";
+  dark?: boolean;
 }) {
   const maxWidth = 7;
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <span className={`text-sm font-medium ${dark ? "text-gray-300" : "text-gray-700"}`}>{label}</span>
         {higher !== "equal" && (
           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-            higher === "dark" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"
+            higher === "dark"
+              ? dark ? "bg-red-900/40 text-red-400" : "bg-red-50 text-red-600"
+              : dark ? "bg-green-900/40 text-green-400" : "bg-green-50 text-green-600"
           }`}>
             {higher === "dark" ? "Dark higher" : "Ethical higher"} by {fmt(Math.abs(darkVal - ethicalVal), 1)}
           </span>
@@ -295,24 +301,24 @@ function ComparisonBar({
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-400 w-12 shrink-0">Dark</span>
-          <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+          <span className={`text-[10px] w-12 shrink-0 ${dark ? "text-gray-500" : "text-gray-400"}`}>Dark</span>
+          <div className={`flex-1 rounded-full h-3 overflow-hidden ${dark ? "bg-gray-800" : "bg-gray-100"}`}>
             <div
               className="h-full bg-red-400 rounded-full transition-all"
               style={{ width: `${(darkVal / maxWidth) * 100}%` }}
             />
           </div>
-          <span className="text-xs font-semibold text-gray-700 w-8 text-right">{fmt(darkVal, 1)}</span>
+          <span className={`text-xs font-semibold w-8 text-right ${dark ? "text-gray-300" : "text-gray-700"}`}>{fmt(darkVal, 1)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-400 w-12 shrink-0">Ethical</span>
-          <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+          <span className={`text-[10px] w-12 shrink-0 ${dark ? "text-gray-500" : "text-gray-400"}`}>Ethical</span>
+          <div className={`flex-1 rounded-full h-3 overflow-hidden ${dark ? "bg-gray-800" : "bg-gray-100"}`}>
             <div
               className="h-full bg-green-400 rounded-full transition-all"
               style={{ width: `${(ethicalVal / maxWidth) * 100}%` }}
             />
           </div>
-          <span className="text-xs font-semibold text-gray-700 w-8 text-right">{fmt(ethicalVal, 1)}</span>
+          <span className={`text-xs font-semibold w-8 text-right ${dark ? "text-gray-300" : "text-gray-700"}`}>{fmt(ethicalVal, 1)}</span>
         </div>
       </div>
     </div>
@@ -322,6 +328,7 @@ function ComparisonBar({
 // Collapsible stats detail
 function StatsDetail({
   tests,
+  dark,
 }: {
   tests: {
     label: string;
@@ -335,13 +342,14 @@ function StatsDetail({
     df: number;
     significant: boolean;
   }[];
+  dark?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="mt-3">
       <button
         onClick={() => setOpen(!open)}
-        className="text-xs text-[#7B2D8E] font-medium cursor-pointer hover:underline"
+        className={`text-xs font-medium cursor-pointer hover:underline ${dark ? "text-purple-400" : "text-[#7B2D8E]"}`}
       >
         {open ? "Hide" : "Show"} statistical details
       </button>
@@ -349,7 +357,7 @@ function StatsDetail({
         <div className="mt-2 overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-left text-gray-400 border-b">
+              <tr className={`text-left border-b ${dark ? "text-gray-500 border-gray-700" : "text-gray-400"}`}>
                 <th className="pb-1.5 pr-3">Measure</th>
                 <th className="pb-1.5 pr-3">Dark (M ± SD)</th>
                 <th className="pb-1.5 pr-3">Ethical (M ± SD)</th>
@@ -360,13 +368,13 @@ function StatsDetail({
             </thead>
             <tbody>
               {tests.map((t) => (
-                <tr key={t.label} className="border-b border-gray-50">
-                  <td className="py-1.5 pr-3 text-gray-600">{t.label}</td>
-                  <td className="py-1.5 pr-3 font-mono">{fmt(t.darkMean)} ± {fmt(t.darkSd)} (n={t.darkN})</td>
-                  <td className="py-1.5 pr-3 font-mono">{fmt(t.ethicalMean)} ± {fmt(t.ethicalSd)} (n={t.ethicalN})</td>
-                  <td className="py-1.5 pr-3 font-mono">{fmt(t.t)}</td>
-                  <td className="py-1.5 pr-3 font-mono">{fmt(t.df, 1)}</td>
-                  <td className="py-1.5"><Badge sig={t.significant} /></td>
+                <tr key={t.label} className={`border-b ${dark ? "border-gray-800" : "border-gray-50"}`}>
+                  <td className={`py-1.5 pr-3 ${dark ? "text-gray-400" : "text-gray-600"}`}>{t.label}</td>
+                  <td className={`py-1.5 pr-3 font-mono ${dark ? "text-gray-300" : ""}`}>{fmt(t.darkMean)} ± {fmt(t.darkSd)} (n={t.darkN})</td>
+                  <td className={`py-1.5 pr-3 font-mono ${dark ? "text-gray-300" : ""}`}>{fmt(t.ethicalMean)} ± {fmt(t.ethicalSd)} (n={t.ethicalN})</td>
+                  <td className={`py-1.5 pr-3 font-mono ${dark ? "text-gray-300" : ""}`}>{fmt(t.t)}</td>
+                  <td className={`py-1.5 pr-3 font-mono ${dark ? "text-gray-300" : ""}`}>{fmt(t.df, 1)}</td>
+                  <td className="py-1.5"><Badge sig={t.significant} dark={dark} /></td>
                 </tr>
               ))}
             </tbody>
@@ -382,6 +390,7 @@ function StatsDetail({
 export default function InsightsPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dm, setDm] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -701,10 +710,10 @@ export default function InsightsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className={`min-h-screen flex items-center justify-center ${dm ? "bg-gray-950" : "bg-gray-50"}`}>
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-[#7B2D8E] border-t-transparent rounded-full mx-auto" />
-          <p className="mt-3 text-sm text-gray-500">Loading insights...</p>
+          <p className={`mt-3 text-sm ${dm ? "text-gray-400" : "text-gray-500"}`}>Loading insights...</p>
         </div>
       </div>
     );
@@ -714,70 +723,84 @@ export default function InsightsPage() {
     total ? `${Math.round((n / total) * 100)}%` : "—";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${dm ? "bg-gray-950" : "bg-gray-50"}`}>
       {/* Hero */}
-      <div className="bg-white border-b">
+      <div className={`border-b ${dm ? "bg-gray-900 border-gray-800" : "bg-white"}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-          <p className="text-xs sm:text-sm text-[#7B2D8E] font-semibold uppercase tracking-wide">
-            Research Findings
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+          <div className="flex items-center justify-between">
+            <p className={`text-xs sm:text-sm font-semibold uppercase tracking-wide ${dm ? "text-purple-400" : "text-[#7B2D8E]"}`}>
+              Research Findings
+            </p>
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDm(!dm)}
+              className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors ${dm ? "bg-purple-600" : "bg-gray-200"}`}
+              aria-label="Toggle dark mode"
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${dm ? "translate-x-7" : "translate-x-1"}`}>
+                <span className="flex items-center justify-center h-full text-xs">
+                  {dm ? "\u{1F319}" : "\u{2600}\u{FE0F}"}
+                </span>
+              </span>
+            </button>
+          </div>
+          <h1 className={`text-2xl sm:text-3xl font-bold mt-2 ${dm ? "text-gray-100" : "text-gray-900"}`}>
             Dark Patterns in Quick Commerce Checkout Flows
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-3 max-w-2xl leading-relaxed">
+          <p className={`text-sm sm:text-base mt-3 max-w-2xl leading-relaxed ${dm ? "text-gray-400" : "text-gray-600"}`}>
             A between-subjects experiment comparing dark pattern checkout
             interfaces against ethical design alternatives, measuring impact on
             user autonomy, perceived manipulation, trust, and revenue.
           </p>
-          <div className="flex flex-wrap gap-4 mt-5 text-xs sm:text-sm text-gray-500">
+          <div className={`flex flex-wrap gap-4 mt-5 text-xs sm:text-sm ${dm ? "text-gray-400" : "text-gray-500"}`}>
             <span>
-              <strong className="text-gray-700">Researcher:</strong> Arhaan
+              <strong className={dm ? "text-gray-300" : "text-gray-700"}>Researcher:</strong> Arhaan
               Bahadur
             </span>
             <span>
-              <strong className="text-gray-700">Institution:</strong> IIIT
+              <strong className={dm ? "text-gray-300" : "text-gray-700"}>Institution:</strong> IIIT
               Delhi
             </span>
             <span>
-              <strong className="text-gray-700">Course:</strong> Design
+              <strong className={dm ? "text-gray-300" : "text-gray-700"}>Course:</strong> Design
               Research &amp; Methodology
             </span>
           </div>
           <div className="flex flex-wrap gap-3 mt-5">
-            <div className="bg-gray-100 rounded-lg px-3 py-2 text-center min-w-[80px]">
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">
+            <div className={`rounded-lg px-3 py-2 text-center min-w-[80px] ${dm ? "bg-gray-800" : "bg-gray-100"}`}>
+              <p className={`text-xl sm:text-2xl font-bold ${dm ? "text-gray-100" : "text-gray-900"}`}>
                 {insights.total}
               </p>
-              <p className="text-[10px] text-gray-500 uppercase">
+              <p className={`text-[10px] uppercase ${dm ? "text-gray-500" : "text-gray-500"}`}>
                 Participants
               </p>
             </div>
-            <div className="bg-red-50 rounded-lg px-3 py-2 text-center min-w-[80px]">
-              <p className="text-xl sm:text-2xl font-bold text-red-700">
+            <div className={`rounded-lg px-3 py-2 text-center min-w-[80px] ${dm ? "bg-red-900/30" : "bg-red-50"}`}>
+              <p className={`text-xl sm:text-2xl font-bold ${dm ? "text-red-400" : "text-red-700"}`}>
                 {insights.darkN}
               </p>
-              <p className="text-[10px] text-gray-500 uppercase">
+              <p className={`text-[10px] uppercase ${dm ? "text-gray-500" : "text-gray-500"}`}>
                 Dark Pattern
               </p>
             </div>
-            <div className="bg-green-50 rounded-lg px-3 py-2 text-center min-w-[80px]">
-              <p className="text-xl sm:text-2xl font-bold text-green-700">
+            <div className={`rounded-lg px-3 py-2 text-center min-w-[80px] ${dm ? "bg-green-900/30" : "bg-green-50"}`}>
+              <p className={`text-xl sm:text-2xl font-bold ${dm ? "text-green-400" : "text-green-700"}`}>
                 {insights.ethicalN}
               </p>
-              <p className="text-[10px] text-gray-500 uppercase">Ethical</p>
+              <p className={`text-[10px] uppercase ${dm ? "text-gray-500" : "text-gray-500"}`}>Ethical</p>
             </div>
-            <div className="bg-purple-50 rounded-lg px-3 py-2 text-center min-w-[80px]">
-              <p className="text-xl sm:text-2xl font-bold text-[#7B2D8E]">
+            <div className={`rounded-lg px-3 py-2 text-center min-w-[80px] ${dm ? "bg-purple-900/30" : "bg-purple-50"}`}>
+              <p className={`text-xl sm:text-2xl font-bold ${dm ? "text-purple-400" : "text-[#7B2D8E]"}`}>
                 {insights.completed}
               </p>
-              <p className="text-[10px] text-gray-500 uppercase">Completed</p>
+              <p className={`text-[10px] uppercase ${dm ? "text-gray-500" : "text-gray-500"}`}>Completed</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <div className="bg-white border-b sticky top-0 z-30">
+      <div className={`border-b sticky top-0 z-30 ${dm ? "bg-gray-900 border-gray-800" : "bg-white"}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex gap-4 overflow-x-auto text-xs sm:text-sm">
           {[
             { href: "#demographics", label: "Demographics" },
@@ -792,7 +815,7 @@ export default function InsightsPage() {
             <a
               key={link.href}
               href={link.href}
-              className="py-3 text-gray-500 hover:text-[#7B2D8E] whitespace-nowrap border-b-2 border-transparent hover:border-[#7B2D8E] transition-colors"
+              className={`py-3 whitespace-nowrap border-b-2 border-transparent transition-colors ${dm ? "text-gray-400 hover:text-purple-400 hover:border-purple-400" : "text-gray-500 hover:text-[#7B2D8E] hover:border-[#7B2D8E]"}`}
             >
               {link.label}
             </a>
@@ -806,6 +829,7 @@ export default function InsightsPage() {
           id="demographics"
           title="Sample Demographics"
           subtitle={`N = ${insights.completed} completed responses (${insights.darkDoneN} dark pattern, ${insights.ethicalDoneN} ethical). ${insights.total} total started.`}
+          dark={dm}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[
@@ -820,7 +844,7 @@ export default function InsightsPage() {
               const total = chart.data.reduce((s, d) => s + d.value, 0);
               return (
                 <div key={chart.title}>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  <h3 className={`text-sm font-semibold mb-2 ${dm ? "text-gray-300" : "text-gray-700"}`}>
                     {chart.title}
                   </h3>
                   <div className="h-44">
@@ -844,7 +868,8 @@ export default function InsightsPage() {
                         </Pie>
                         <Tooltip
                           formatter={(value) => [value, "Count"]}
-                          contentStyle={{ fontSize: 12 }}
+                          contentStyle={{ fontSize: 12, backgroundColor: dm ? "#1f2937" : "#fff", border: dm ? "1px solid #374151" : "1px solid #e5e7eb", color: dm ? "#e5e7eb" : "#111" }}
+                          itemStyle={{ color: dm ? "#d1d5db" : undefined }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -852,13 +877,13 @@ export default function InsightsPage() {
                   {/* Legend */}
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2 justify-center">
                     {chart.data.map((d, i) => (
-                      <div key={d.name} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <div key={d.name} className={`flex items-center gap-1.5 text-xs ${dm ? "text-gray-400" : "text-gray-600"}`}>
                         <span
                           className="w-2.5 h-2.5 rounded-full shrink-0"
                           style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
                         />
                         <span>{prettify(d.name)}</span>
-                        <span className="text-gray-400">
+                        <span className={dm ? "text-gray-500" : "text-gray-400"}>
                           {total ? `${Math.round((d.value / total) * 100)}%` : ""}
                         </span>
                       </div>
@@ -874,26 +899,27 @@ export default function InsightsPage() {
         <Section
           title="Survey Score Comparison"
           subtitle="Mean scores on 7-point Likert scale (1 = Strongly Disagree, 7 = Strongly Agree)"
+          dark={dm}
         >
           {insights.completed === 0 ? (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to show survey comparison.
             </p>
           ) : (
           <div className="h-72 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={insights.likertComparison}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke={dm ? "#374151" : "#f1f5f9"} />
                 <XAxis
                   dataKey="question"
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 10, fill: dm ? "#9ca3af" : "#6b7280" }}
                   angle={-20}
                   textAnchor="end"
                   height={50}
                 />
-                <YAxis domain={[1, 7]} allowDataOverflow tick={{ fontSize: 11 }} ticks={[1, 2, 3, 4, 5, 6, 7]} />
-                <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <YAxis domain={[1, 7]} allowDataOverflow tick={{ fontSize: 11, fill: dm ? "#9ca3af" : "#6b7280" }} ticks={[1, 2, 3, 4, 5, 6, 7]} />
+                <Tooltip contentStyle={{ fontSize: 12, backgroundColor: dm ? "#1f2937" : "#fff", border: dm ? "1px solid #374151" : "1px solid #e5e7eb", color: dm ? "#e5e7eb" : "#111" }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: dm ? "#d1d5db" : undefined }} />
                 <ReferenceLine y={4} stroke={COLORS.neutral} strokeDasharray="4 4" label={{ value: "Neutral", position: "right", fontSize: 10, fill: "#94a3b8" }} />
                 <Bar
                   dataKey="Dark Pattern"
@@ -916,6 +942,7 @@ export default function InsightsPage() {
           id="h1"
           title="H1: Perceived Autonomy"
           subtitle="Do users of dark pattern checkouts feel less in control of their choices?"
+          dark={dm}
         >
           {insights.h1Tests.length > 0 && insights.h1Tests[0].darkN > 0 ? (
             <>
@@ -926,6 +953,7 @@ export default function InsightsPage() {
                     label={t.label}
                     darkVal={t.darkMean}
                     ethicalVal={t.ethicalMean}
+                    dark={dm}
                     higher={
                       Math.abs(t.darkMean - t.ethicalMean) < 0.05
                         ? "equal"
@@ -936,29 +964,29 @@ export default function InsightsPage() {
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-3">Scores on a 1-7 scale where 7 = strongly agree</p>
+              <p className={`text-xs mt-3 ${dm ? "text-gray-500" : "text-gray-400"}`}>Scores on a 1-7 scale where 7 = strongly agree</p>
               {insights.h1Tests.some((t) => t.significant) ? (
-                <div className="mt-4 text-sm bg-green-50 border border-green-200 rounded-xl p-4">
-                  <p className="font-semibold text-green-800">H1 Supported</p>
-                  <p className="text-green-700 mt-1">
+                <div className={`mt-4 text-sm rounded-xl p-4 border ${dm ? "bg-green-900/20 border-green-800" : "bg-green-50 border-green-200"}`}>
+                  <p className={`font-semibold ${dm ? "text-green-400" : "text-green-800"}`}>H1 Supported</p>
+                  <p className={`mt-1 ${dm ? "text-green-300" : "text-green-700"}`}>
                     Users in the dark pattern group reported significantly lower
                     feelings of control and autonomy during checkout.
                   </p>
                 </div>
               ) : (
-                <div className="mt-4 text-sm bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <p className="font-semibold text-amber-800">Trend in expected direction</p>
-                  <p className="text-amber-700 mt-1">
+                <div className={`mt-4 text-sm rounded-xl p-4 border ${dm ? "bg-amber-900/20 border-amber-800" : "bg-amber-50 border-amber-200"}`}>
+                  <p className={`font-semibold ${dm ? "text-amber-400" : "text-amber-800"}`}>Trend in expected direction</p>
+                  <p className={`mt-1 ${dm ? "text-amber-300" : "text-amber-700"}`}>
                     Dark pattern users scored lower on autonomy, but the difference
                     isn&apos;t statistically significant yet with the current sample
                     (n = {insights.h1Tests[0].darkN + insights.h1Tests[0].ethicalN}).
                   </p>
                 </div>
               )}
-              <StatsDetail tests={insights.h1Tests} />
+              <StatsDetail tests={insights.h1Tests} dark={dm} />
             </>
           ) : (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to run this analysis.
             </p>
           )}
@@ -969,6 +997,7 @@ export default function InsightsPage() {
           id="h2"
           title="H2: Perceived Manipulation & Trust"
           subtitle="Do users of dark pattern checkouts feel more manipulated and less trusting?"
+          dark={dm}
         >
           {insights.h2Tests.length > 0 && insights.h2Tests[0].darkN > 0 ? (
             <>
@@ -979,6 +1008,7 @@ export default function InsightsPage() {
                     label={t.label}
                     darkVal={t.darkMean}
                     ethicalVal={t.ethicalMean}
+                    dark={dm}
                     higher={
                       Math.abs(t.darkMean - t.ethicalMean) < 0.05
                         ? "equal"
@@ -989,28 +1019,28 @@ export default function InsightsPage() {
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-3">Scores on a 1-7 scale where 7 = strongly agree</p>
+              <p className={`text-xs mt-3 ${dm ? "text-gray-500" : "text-gray-400"}`}>Scores on a 1-7 scale where 7 = strongly agree</p>
               {insights.h2Tests.some((t) => t.significant) ? (
-                <div className="mt-4 text-sm bg-green-50 border border-green-200 rounded-xl p-4">
-                  <p className="font-semibold text-green-800">H2 Supported</p>
-                  <p className="text-green-700 mt-1">
+                <div className={`mt-4 text-sm rounded-xl p-4 border ${dm ? "bg-green-900/20 border-green-800" : "bg-green-50 border-green-200"}`}>
+                  <p className={`font-semibold ${dm ? "text-green-400" : "text-green-800"}`}>H2 Supported</p>
+                  <p className={`mt-1 ${dm ? "text-green-300" : "text-green-700"}`}>
                     Significant differences found — dark pattern users reported feeling
                     more pressured and/or less trusting of the app.
                   </p>
                 </div>
               ) : (
-                <div className="mt-4 text-sm bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <p className="font-semibold text-amber-800">Trend in expected direction</p>
-                  <p className="text-amber-700 mt-1">
+                <div className={`mt-4 text-sm rounded-xl p-4 border ${dm ? "bg-amber-900/20 border-amber-800" : "bg-amber-50 border-amber-200"}`}>
+                  <p className={`font-semibold ${dm ? "text-amber-400" : "text-amber-800"}`}>Trend in expected direction</p>
+                  <p className={`mt-1 ${dm ? "text-amber-300" : "text-amber-700"}`}>
                     Dark pattern users scored higher on pressure and lower on trust,
                     but differences aren&apos;t statistically significant with the current sample.
                   </p>
                 </div>
               )}
-              <StatsDetail tests={insights.h2Tests} />
+              <StatsDetail tests={insights.h2Tests} dark={dm} />
             </>
           ) : (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to run this analysis.
             </p>
           )}
@@ -1021,9 +1051,10 @@ export default function InsightsPage() {
           id="h3"
           title="H3: Revenue Impact"
           subtitle="Do dark patterns extract more money through non-product charges? (Compared using extra revenue — not raw totals — to control for cart modifications.)"
+          dark={dm}
         >
           {insights.darkCartN === 0 && insights.ethicalCartN === 0 ? (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to run this analysis.
             </p>
           ) : (
@@ -1042,12 +1073,12 @@ export default function InsightsPage() {
                     },
                   ]}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="group" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={dm ? "#374151" : "#f1f5f9"} />
+                  <XAxis dataKey="group" tick={{ fontSize: 12, fill: dm ? "#9ca3af" : "#6b7280" }} />
+                  <YAxis tick={{ fontSize: 11, fill: dm ? "#9ca3af" : "#6b7280" }} />
                   <Tooltip
                     formatter={(value) => [`₹${value}`, "Avg Extra Charges"]}
-                    contentStyle={{ fontSize: 12 }}
+                    contentStyle={{ fontSize: 12, backgroundColor: dm ? "#1f2937" : "#fff", border: dm ? "1px solid #374151" : "1px solid #e5e7eb", color: dm ? "#e5e7eb" : "#111" }}
                   />
                   <Bar dataKey="extra" radius={[6, 6, 0, 0]}>
                     <Cell fill={COLORS.dark} />
@@ -1057,45 +1088,49 @@ export default function InsightsPage() {
               </ResponsiveContainer>
             </div>
             <div className="space-y-3">
-              <div className="bg-red-50 rounded-xl p-4">
-                <p className="text-xs text-gray-500">Dark Pattern Group</p>
-                <p className="text-2xl font-bold text-red-700">
+              <div className={`rounded-xl p-4 ${dm ? "bg-red-900/20" : "bg-red-50"}`}>
+                <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Dark Pattern Group</p>
+                <p className={`text-2xl font-bold ${dm ? "text-red-400" : "text-red-700"}`}>
                   ₹{fmt(insights.darkExtraMean, 0)}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className={`text-xs ${dm ? "text-gray-500" : "text-gray-400"}`}>
                   avg extra charges per order
                 </p>
-                <p className="text-[10px] text-gray-400 mt-1">
+                <p className={`text-[10px] mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                   Raw order total: ₹{fmt(insights.darkCartMean, 0)} avg ({insights.darkCartN} orders)
                 </p>
               </div>
-              <div className="bg-green-50 rounded-xl p-4">
-                <p className="text-xs text-gray-500">Ethical Group</p>
-                <p className="text-2xl font-bold text-green-700">
+              <div className={`rounded-xl p-4 ${dm ? "bg-green-900/20" : "bg-green-50"}`}>
+                <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Ethical Group</p>
+                <p className={`text-2xl font-bold ${dm ? "text-green-400" : "text-green-700"}`}>
                   ₹{fmt(insights.ethicalExtraMean, 0)}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className={`text-xs ${dm ? "text-gray-500" : "text-gray-400"}`}>
                   avg extra charges per order
                 </p>
-                <p className="text-[10px] text-gray-400 mt-1">
+                <p className={`text-[10px] mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                   Raw order total: ₹{fmt(insights.ethicalCartMean, 0)} avg ({insights.ethicalCartN} orders)
                 </p>
               </div>
               {insights.darkCartN > 0 && (
                 <div className={`rounded-xl p-4 text-sm border ${
                   insights.h3Test.significant
-                    ? "bg-green-50 border-green-200"
-                    : "bg-amber-50 border-amber-200"
+                    ? dm ? "bg-green-900/20 border-green-800" : "bg-green-50 border-green-200"
+                    : dm ? "bg-amber-900/20 border-amber-800" : "bg-amber-50 border-amber-200"
                 }`}>
                   <p className={`font-semibold ${
-                    insights.h3Test.significant ? "text-green-800" : "text-amber-800"
+                    insights.h3Test.significant
+                      ? dm ? "text-green-400" : "text-green-800"
+                      : dm ? "text-amber-400" : "text-amber-800"
                   }`}>
                     Dark patterns add ₹{fmt(Math.abs(insights.darkExtraMean - insights.ethicalExtraMean), 0)} more in non-product charges
                   </p>
                   <p className={`text-xs mt-1 ${
-                    insights.h3Test.significant ? "text-green-600" : "text-amber-600"
+                    insights.h3Test.significant
+                      ? dm ? "text-green-300" : "text-green-600"
+                      : dm ? "text-amber-300" : "text-amber-600"
                   }`}>
-                    Sneaked items, pre-selected tips/delivery/charity, and hidden surge fees — independent of what products the user chose. <Badge sig={insights.h3Test.significant} />
+                    Sneaked items, pre-selected tips/delivery/charity, and hidden surge fees — independent of what products the user chose. <Badge sig={insights.h3Test.significant} dark={dm} />
                   </p>
                 </div>
               )}
@@ -1108,51 +1143,52 @@ export default function InsightsPage() {
         <Section
           title="Revenue Breakdown: Where the Extra Money Comes From"
           subtitle="Non-product charges per order: delivery fee + surge fee + tip + charity + sneaked item cost - promo discount"
+          dark={dm}
         >
           {insights.completed === 0 ? (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to show revenue breakdown.
             </p>
           ) : (
           <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-red-50 rounded-xl p-5 text-center">
-              <p className="text-xs text-gray-500">Dark Pattern Extra</p>
-              <p className="text-3xl font-bold text-red-700">
+            <div className={`rounded-xl p-5 text-center ${dm ? "bg-red-900/20" : "bg-red-50"}`}>
+              <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Dark Pattern Extra</p>
+              <p className={`text-3xl font-bold ${dm ? "text-red-400" : "text-red-700"}`}>
                 ₹{fmt(insights.darkExtraMean, 0)}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className={`text-xs mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 avg non-product charges per order
               </p>
             </div>
-            <div className="bg-green-50 rounded-xl p-5 text-center">
-              <p className="text-xs text-gray-500">Ethical Extra</p>
-              <p className="text-3xl font-bold text-green-700">
+            <div className={`rounded-xl p-5 text-center ${dm ? "bg-green-900/20" : "bg-green-50"}`}>
+              <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Ethical Extra</p>
+              <p className={`text-3xl font-bold ${dm ? "text-green-400" : "text-green-700"}`}>
                 ₹{fmt(insights.ethicalExtraMean, 0)}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className={`text-xs mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 avg non-product charges per order
               </p>
             </div>
-            <div className="bg-purple-50 rounded-xl p-5 text-center">
-              <p className="text-xs text-gray-500">Dark Pattern Uplift</p>
-              <p className="text-3xl font-bold text-[#7B2D8E]">
+            <div className={`rounded-xl p-5 text-center ${dm ? "bg-purple-900/20" : "bg-purple-50"}`}>
+              <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Dark Pattern Uplift</p>
+              <p className={`text-3xl font-bold ${dm ? "text-purple-400" : "text-[#7B2D8E]"}`}>
                 ₹{fmt(Math.abs(insights.darkExtraMean - insights.ethicalExtraMean), 0)}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className={`text-xs mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 extra per order from manipulation
               </p>
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-xl p-4 space-y-1">
-            <p className="font-medium text-gray-700">Where the extra charges come from (dark pattern only):</p>
-            <ul className="list-disc list-inside text-xs text-gray-500 space-y-0.5">
+          <div className={`mt-4 text-sm rounded-xl p-4 space-y-1 ${dm ? "text-gray-400 bg-gray-800" : "text-gray-600 bg-gray-50"}`}>
+            <p className={`font-medium ${dm ? "text-gray-300" : "text-gray-700"}`}>Where the extra charges come from (dark pattern only):</p>
+            <ul className={`list-disc list-inside text-xs space-y-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
               <li>Sneaked item (Amul Dahi): ₹35 — kept by {insights.darkWithCheckout > 0 ? `${Math.round((insights.darkSneakedKept / insights.darkWithCheckout) * 100)}%` : "—"} of dark pattern users</li>
               <li>Pre-selected express delivery: ₹35</li>
               <li>Pre-selected tip: ₹30</li>
               <li>Hidden surge fee: ₹10</li>
               <li>Pre-checked charity: ₹2</li>
-              <li className="font-medium text-gray-600">Maximum possible dark pattern uplift: ₹112 per order</li>
+              <li className={`font-medium ${dm ? "text-gray-400" : "text-gray-600"}`}>Maximum possible dark pattern uplift: ₹112 per order</li>
             </ul>
           </div>
           </>
@@ -1164,46 +1200,47 @@ export default function InsightsPage() {
           id="promo"
           title="Promo Code Usability"
           subtitle="Dark pattern shows confusing/misleading promos; ethical shows clear, valid codes"
+          dark={dm}
         >
           {insights.completed === 0 ? (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to show promo analysis.
             </p>
           ) : (
           <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-red-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Dark Pattern Group</p>
-              <p className="text-lg font-bold text-red-700">
+            <div className={`rounded-xl p-4 ${dm ? "bg-red-900/20" : "bg-red-50"}`}>
+              <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Dark Pattern Group</p>
+              <p className={`text-lg font-bold ${dm ? "text-red-400" : "text-red-700"}`}>
                 {insights.darkWithCheckout > 0
                   ? `${Math.round((insights.darkPromoApplied / insights.darkWithCheckout) * 100)}%`
                   : "—"}{" "}
-                <span className="text-sm font-normal text-gray-500">applied a promo</span>
+                <span className={`text-sm font-normal ${dm ? "text-gray-400" : "text-gray-500"}`}>applied a promo</span>
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className={`text-xs mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 Avg {fmt(insights.darkPromoAttemptsMean, 1)} attempts per user who tried
               </p>
-              <p className="text-xs text-gray-400">
+              <p className={`text-xs ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 3 of 4 codes are misleading (expired or unreachable min order)
               </p>
             </div>
-            <div className="bg-green-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Ethical Group</p>
-              <p className="text-lg font-bold text-green-700">
+            <div className={`rounded-xl p-4 ${dm ? "bg-green-900/20" : "bg-green-50"}`}>
+              <p className={`text-xs ${dm ? "text-gray-400" : "text-gray-500"}`}>Ethical Group</p>
+              <p className={`text-lg font-bold ${dm ? "text-green-400" : "text-green-700"}`}>
                 {insights.ethicalDoneN > 0
                   ? `${Math.round((insights.ethicalPromoApplied / insights.ethicalDoneN) * 100)}%`
                   : "—"}{" "}
-                <span className="text-sm font-normal text-gray-500">applied a promo</span>
+                <span className={`text-sm font-normal ${dm ? "text-gray-400" : "text-gray-500"}`}>applied a promo</span>
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className={`text-xs mt-1 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 Avg {fmt(insights.ethicalPromoAttemptsMean, 1)} attempts per user who tried
               </p>
-              <p className="text-xs text-gray-400">
+              <p className={`text-xs ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 All available codes are valid and clearly labeled
               </p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-3 bg-gray-50 rounded-lg p-3">
+          <p className={`text-xs mt-3 rounded-lg p-3 ${dm ? "text-gray-400 bg-gray-800" : "text-gray-500 bg-gray-50"}`}>
             Higher attempt counts in the dark pattern group suggest users tried multiple misleading codes
             before finding a valid one (or gave up). This measures the friction introduced by deceptive promo design.
           </p>
@@ -1216,9 +1253,10 @@ export default function InsightsPage() {
           id="behavioral"
           title="What Users Actually Did"
           subtitle="Percentage of participants who kept pre-selected options or accepted suggestions"
+          dark={dm}
         >
           {insights.completed === 0 ? (
-            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg p-4">
+            <p className={`text-sm rounded-lg p-4 ${dm ? "text-gray-500 bg-gray-800" : "text-gray-400 bg-gray-50"}`}>
               Awaiting completed responses to show behavioral data.
             </p>
           ) : (
@@ -1230,16 +1268,16 @@ export default function InsightsPage() {
               return (
                 <div key={row.metric} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">{row.metric}</span>
+                    <span className={`text-sm font-medium ${dm ? "text-gray-300" : "text-gray-700"}`}>{row.metric}</span>
                     {Math.abs(darkPct - ethicalPct) >= 10 && (
-                      <span className="text-[10px] font-medium text-gray-500">
+                      <span className={`text-[10px] font-medium ${dm ? "text-gray-500" : "text-gray-500"}`}>
                         {Math.abs(darkPct - ethicalPct)}pp difference
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                      <div className={`flex-1 rounded-full h-5 overflow-hidden ${dm ? "bg-gray-800" : "bg-gray-100"}`}>
                         <div
                           className="h-full bg-red-400 rounded-full transition-all flex items-center justify-end pr-2"
                           style={{ width: `${Math.max(darkPct, 5)}%` }}
@@ -1250,12 +1288,12 @@ export default function InsightsPage() {
                         </div>
                       </div>
                       {darkPct < 20 && (
-                        <span className="text-xs font-semibold text-red-700">{darkPct}%</span>
+                        <span className={`text-xs font-semibold ${dm ? "text-red-400" : "text-red-700"}`}>{darkPct}%</span>
                       )}
-                      <span className="text-[10px] text-gray-400">Dark</span>
+                      <span className={`text-[10px] ${dm ? "text-gray-500" : "text-gray-400"}`}>Dark</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                      <div className={`flex-1 rounded-full h-5 overflow-hidden ${dm ? "bg-gray-800" : "bg-gray-100"}`}>
                         <div
                           className="h-full bg-green-400 rounded-full transition-all flex items-center justify-end pr-2"
                           style={{ width: `${Math.max(ethicalPct, 5)}%` }}
@@ -1266,16 +1304,16 @@ export default function InsightsPage() {
                         </div>
                       </div>
                       {ethicalPct < 20 && (
-                        <span className="text-xs font-semibold text-green-700">{ethicalPct}%</span>
+                        <span className={`text-xs font-semibold ${dm ? "text-green-400" : "text-green-700"}`}>{ethicalPct}%</span>
                       )}
-                      <span className="text-[10px] text-gray-400">Ethical</span>
+                      <span className={`text-[10px] ${dm ? "text-gray-500" : "text-gray-400"}`}>Ethical</span>
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-gray-400 mt-4">
+          <p className={`text-xs mt-4 ${dm ? "text-gray-500" : "text-gray-400"}`}>
             In the dark pattern version, express delivery, tip, and charity were pre-selected.
             In the ethical version, these were opt-in with equal-weight choices.
           </p>
@@ -1288,16 +1326,17 @@ export default function InsightsPage() {
           id="timing"
           title="Time Spent per Screen"
           subtitle="How long users spent on each step — longer checkout time may indicate confusion or hesitation"
+          dark={dm}
         >
           {insights.screenTimeData.length > 0 ? (
             <>
               <div className="h-64 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={insights.screenTimeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="screen" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={dm ? "#374151" : "#f1f5f9"} />
+                    <XAxis dataKey="screen" tick={{ fontSize: 11, fill: dm ? "#9ca3af" : "#6b7280" }} />
                     <YAxis
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: dm ? "#9ca3af" : "#6b7280" }}
                       label={{
                         value: "seconds",
                         angle: -90,
@@ -1306,8 +1345,8 @@ export default function InsightsPage() {
                         fill: "#94a3b8",
                       }}
                     />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Tooltip contentStyle={{ fontSize: 12, backgroundColor: dm ? "#1f2937" : "#fff", border: dm ? "1px solid #374151" : "1px solid #e5e7eb", color: dm ? "#e5e7eb" : "#111" }} />
+                    <Legend wrapperStyle={{ fontSize: 12, color: dm ? "#d1d5db" : undefined }} />
                     <Bar
                       dataKey="Dark Pattern"
                       fill={COLORS.dark}
@@ -1321,13 +1360,13 @@ export default function InsightsPage() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className={`text-xs mt-2 ${dm ? "text-gray-500" : "text-gray-400"}`}>
                 Dark pattern users may spend more time on checkout due to reviewing unexpected fees,
                 or less time if urgency timers rushed them through.
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-400">
+            <p className={`text-sm ${dm ? "text-gray-500" : "text-gray-400"}`}>
               No screen timing data collected yet.
             </p>
           )}
@@ -1338,11 +1377,12 @@ export default function InsightsPage() {
           id="qualitative"
           title="Qualitative Responses"
           subtitle="Open-ended responses grouped by experiment condition"
+          dark={dm}
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Dark pattern responses */}
             <div>
-              <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+              <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${dm ? "text-red-400" : "text-red-700"}`}>
                 <span className="w-2 h-2 rounded-full bg-red-500" />
                 Dark Pattern Group
               </h3>
@@ -1351,43 +1391,43 @@ export default function InsightsPage() {
                   {insights.darkOpenEnded.map((r, i) => (
                     <div
                       key={i}
-                      className="bg-red-50/50 rounded-xl p-4 space-y-2 text-sm border border-red-100"
+                      className={`rounded-xl p-4 space-y-2 text-sm border ${dm ? "bg-red-900/10 border-red-900/30" : "bg-red-50/50 border-red-100"}`}
                     >
                       {r.unfair && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase mb-0.5">
+                          <p className={`text-[10px] uppercase mb-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
                             What felt unfair
                           </p>
-                          <p className="text-gray-800">{r.unfair}</p>
+                          <p className={dm ? "text-gray-300" : "text-gray-800"}>{r.unfair}</p>
                         </div>
                       )}
                       {r.change && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase mb-0.5">
+                          <p className={`text-[10px] uppercase mb-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
                             What they would change
                           </p>
-                          <p className="text-gray-800">{r.change}</p>
+                          <p className={dm ? "text-gray-300" : "text-gray-800"}>{r.change}</p>
                         </div>
                       )}
                       {r.comments && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase mb-0.5">
+                          <p className={`text-[10px] uppercase mb-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
                             Additional
                           </p>
-                          <p className="text-gray-800">{r.comments}</p>
+                          <p className={dm ? "text-gray-300" : "text-gray-800"}>{r.comments}</p>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-400">No responses yet.</p>
+                <p className={`text-sm ${dm ? "text-gray-500" : "text-gray-400"}`}>No responses yet.</p>
               )}
             </div>
 
             {/* Ethical responses */}
             <div>
-              <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center gap-2">
+              <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${dm ? "text-green-400" : "text-green-700"}`}>
                 <span className="w-2 h-2 rounded-full bg-green-500" />
                 Ethical Group
               </h3>
@@ -1396,53 +1436,53 @@ export default function InsightsPage() {
                   {insights.ethicalOpenEnded.map((r, i) => (
                     <div
                       key={i}
-                      className="bg-green-50/50 rounded-xl p-4 space-y-2 text-sm border border-green-100"
+                      className={`rounded-xl p-4 space-y-2 text-sm border ${dm ? "bg-green-900/10 border-green-900/30" : "bg-green-50/50 border-green-100"}`}
                     >
                       {r.unfair && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase mb-0.5">
+                          <p className={`text-[10px] uppercase mb-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
                             What felt unfair
                           </p>
-                          <p className="text-gray-800">{r.unfair}</p>
+                          <p className={dm ? "text-gray-300" : "text-gray-800"}>{r.unfair}</p>
                         </div>
                       )}
                       {r.change && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase mb-0.5">
+                          <p className={`text-[10px] uppercase mb-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
                             What they would change
                           </p>
-                          <p className="text-gray-800">{r.change}</p>
+                          <p className={dm ? "text-gray-300" : "text-gray-800"}>{r.change}</p>
                         </div>
                       )}
                       {r.comments && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase mb-0.5">
+                          <p className={`text-[10px] uppercase mb-0.5 ${dm ? "text-gray-500" : "text-gray-500"}`}>
                             Additional
                           </p>
-                          <p className="text-gray-800">{r.comments}</p>
+                          <p className={dm ? "text-gray-300" : "text-gray-800"}>{r.comments}</p>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-400">No responses yet.</p>
+                <p className={`text-sm ${dm ? "text-gray-500" : "text-gray-400"}`}>No responses yet.</p>
               )}
             </div>
           </div>
         </Section>
 
         {/* ═══ METHODOLOGY NOTE ═══ */}
-        <Section title="Methodology">
-          <div className="prose prose-sm max-w-none text-gray-600 space-y-3">
+        <Section title="Methodology" dark={dm}>
+          <div className={`prose prose-sm max-w-none space-y-3 ${dm ? "text-gray-400" : "text-gray-600"}`}>
             <p>
-              <strong>Design:</strong> Between-subjects experiment with random
+              <strong className={dm ? "text-gray-300" : undefined}>Design:</strong> Between-subjects experiment with random
               assignment (alternating for balance). Participants were randomly
               assigned to either a dark pattern checkout prototype (control) or
               an ethical design alternative (treatment).
             </p>
             <p>
-              <strong>Prototype:</strong> A simulated quick commerce checkout
+              <strong className={dm ? "text-gray-300" : undefined}>Prototype:</strong> A simulated quick commerce checkout
               flow modeled after apps like Zepto and Blinkit. Both groups
               received the same base cart (8 grocery items). The dark pattern
               version included sneaked items, pre-selected tips, hidden fees,
@@ -1450,13 +1490,13 @@ export default function InsightsPage() {
               costs upfront with equal-weight opt-in choices.
             </p>
             <p>
-              <strong>Measures:</strong> 7 Likert-scale items (1-7) measuring
+              <strong className={dm ? "text-gray-300" : undefined}>Measures:</strong> 7 Likert-scale items (1-7) measuring
               perceived autonomy, transparency, pressure, trust, return intent,
               price fairness, and ease of declining. 3 open-ended questions. Cart
               total and behavioral metrics tracked automatically.
             </p>
             <p>
-              <strong>Analysis:</strong> Independent-samples Welch&apos;s t-tests
+              <strong className={dm ? "text-gray-300" : undefined}>Analysis:</strong> Independent-samples Welch&apos;s t-tests
               for each dependent variable. Behavioral evidence presented as
               proportions. Qualitative responses grouped by condition for
               thematic comparison.
@@ -1465,7 +1505,7 @@ export default function InsightsPage() {
         </Section>
 
         {/* Footer */}
-        <div className="text-center py-8 text-xs text-gray-400">
+        <div className={`text-center py-8 text-xs ${dm ? "text-gray-600" : "text-gray-400"}`}>
           <p>
             Arhaan Bahadur &middot; IIIT Delhi &middot; Design Research &amp; Methodology &middot;
             2026
