@@ -89,7 +89,6 @@ type ParticipantRow = Participant & {
   session: Session | null;
   checkout: CheckoutData | null;
   survey: SurveyResponse | null;
-  interactions: Interaction[];
   deviceInfo: Record<string, unknown> | null;
 };
 
@@ -242,9 +241,13 @@ function StatCard({
 
 function ParticipantDetail({
   row,
+  interactions,
+  interactionsLoading,
   onClose,
 }: {
   row: ParticipantRow;
+  interactions: Interaction[];
+  interactionsLoading: boolean;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"overview" | "interactions" | "raw">(
@@ -252,7 +255,7 @@ function ParticipantDetail({
   );
 
   const screenTimes = useMemo(() => {
-    const exits = row.interactions.filter((i) => i.event_type === "screen_exit");
+    const exits = interactions.filter((i) => i.event_type === "screen_exit");
     const times: Record<string, number> = {};
     exits.forEach((e) => {
       const dur = (e.metadata?.duration_seconds as number) || 0;
@@ -263,7 +266,7 @@ function ParticipantDetail({
       screen,
       seconds: Math.round(seconds * 10) / 10,
     }));
-  }, [row.interactions]);
+  }, [interactions]);
 
   const radarData = useMemo(() => {
     if (!row.survey) return [];
@@ -274,8 +277,14 @@ function ParticipantDetail({
   }, [row.survey]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center overflow-y-auto p-4 pt-8 pb-8">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl">
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center overflow-y-auto p-4 pt-8 pb-8"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b">
           <div>
@@ -574,37 +583,42 @@ function ParticipantDetail({
 
           {tab === "interactions" && (
             <div className="space-y-1 text-xs font-mono">
-              {row.interactions.map((i, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-wrap gap-x-3 gap-y-0.5 py-1.5 border-b border-gray-100"
-                >
-                  <span className="text-gray-400 shrink-0">
-                    {new Date(i.created_at).toLocaleTimeString()}
-                  </span>
-                  <span className="font-semibold text-gray-700">
-                    {i.event_type}
-                  </span>
-                  {i.screen && (
-                    <span className="text-purple-600">@{i.screen}</span>
-                  )}
-                  {i.event_target && (
-                    <span className="text-blue-600">{i.event_target}</span>
-                  )}
-                  {i.event_value && (
-                    <span className="text-orange-600">={i.event_value}</span>
-                  )}
-                  {Object.keys(i.metadata || {}).length > 0 && (
-                    <span className="text-gray-400 break-all">
-                      {JSON.stringify(i.metadata)}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {row.interactions.length === 0 && (
+              {interactionsLoading ? (
+                <p className="text-gray-400 py-4 text-center text-sm">
+                  Loading interactions…
+                </p>
+              ) : interactions.length === 0 ? (
                 <p className="text-gray-400 py-4 text-center text-sm">
                   No interaction data
                 </p>
+              ) : (
+                interactions.map((i, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-wrap gap-x-3 gap-y-0.5 py-1.5 border-b border-gray-100"
+                  >
+                    <span className="text-gray-400 shrink-0">
+                      {new Date(i.created_at).toLocaleTimeString()}
+                    </span>
+                    <span className="font-semibold text-gray-700">
+                      {i.event_type}
+                    </span>
+                    {i.screen && (
+                      <span className="text-purple-600">@{i.screen}</span>
+                    )}
+                    {i.event_target && (
+                      <span className="text-blue-600">{i.event_target}</span>
+                    )}
+                    {i.event_value && (
+                      <span className="text-orange-600">={i.event_value}</span>
+                    )}
+                    {Object.keys(i.metadata || {}).length > 0 && (
+                      <span className="text-gray-400 break-all">
+                        {JSON.stringify(i.metadata)}
+                      </span>
+                    )}
+                  </div>
+                ))
               )}
             </div>
           )}
@@ -629,7 +643,7 @@ function ParticipantDetail({
                   device: row.deviceInfo,
                   checkout: row.checkout,
                   survey: row.survey,
-                  interactions: row.interactions,
+                  interactions,
                 },
                 null,
                 2
@@ -648,6 +662,32 @@ function AdminDashboard() {
   const [rows, setRows] = useState<ParticipantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ParticipantRow | null>(null);
+  const [selectedInteractions, setSelectedInteractions] = useState<Interaction[]>([]);
+  const [interactionsLoading, setInteractionsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selected?.session?.id) {
+      setSelectedInteractions([]);
+      return;
+    }
+    const sid = selected.session.id;
+    let cancelled = false;
+    setInteractionsLoading(true);
+    setSelectedInteractions([]);
+    supabase
+      .from("interactions")
+      .select("*")
+      .eq("session_id", sid)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setSelectedInteractions((data as Interaction[]) || []);
+        setInteractionsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -657,13 +697,16 @@ function AdminDashboard() {
       { data: sessions },
       { data: checkouts },
       { data: surveys },
-      { data: interactions },
+      { data: deviceEvents },
     ] = await Promise.all([
       supabase.from("participants").select("*").order("created_at", { ascending: false }),
       supabase.from("sessions").select("*"),
       supabase.from("checkout_data").select("*"),
       supabase.from("survey_responses").select("*"),
-      supabase.from("interactions").select("*").order("created_at", { ascending: true }),
+      supabase
+        .from("interactions")
+        .select("session_id, metadata")
+        .eq("event_type", "device_info"),
     ]);
 
     const sessionMap = new Map<string, Session>();
@@ -681,29 +724,23 @@ function AdminDashboard() {
       surveyMap.set(s.session_id, s)
     );
 
-    const interactionMap = new Map<string, Interaction[]>();
-    (interactions || []).forEach((i: Interaction) => {
-      if (!interactionMap.has(i.session_id))
-        interactionMap.set(i.session_id, []);
-      interactionMap.get(i.session_id)!.push(i);
-    });
+    const deviceInfoMap = new Map<string, Record<string, unknown>>();
+    (deviceEvents || []).forEach(
+      (e: { session_id: string; metadata: Record<string, unknown> }) =>
+        deviceInfoMap.set(e.session_id, e.metadata)
+    );
 
     const combined: ParticipantRow[] = (participants || []).map(
       (p: Participant) => {
         const session = sessionMap.get(p.id) || null;
         const sid = session?.id || "";
-        const ints = interactionMap.get(sid) || [];
-        const deviceEvent = ints.find((i) => i.event_type === "device_info");
 
         return {
           ...p,
           session,
           checkout: checkoutMap.get(sid) || null,
           survey: surveyMap.get(sid) || null,
-          interactions: ints,
-          deviceInfo: deviceEvent
-            ? (deviceEvent.metadata as Record<string, unknown>)
-            : null,
+          deviceInfo: deviceInfoMap.get(sid) || null,
         };
       }
     );
@@ -1262,6 +1299,8 @@ function AdminDashboard() {
       {selected && (
         <ParticipantDetail
           row={selected}
+          interactions={selectedInteractions}
+          interactionsLoading={interactionsLoading}
           onClose={() => setSelected(null)}
         />
       )}
