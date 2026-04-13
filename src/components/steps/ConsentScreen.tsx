@@ -110,7 +110,7 @@ export function ConsentScreen() {
                   Arhaan Bahadur
                 </p>
                 <p className="text-xs text-gray-500">
-                  IIIT Delhi — B.Des 2022093
+                  IIIT Delhi · B.Tech 2022093
                 </p>
                 <p className="text-xs text-gray-500">
                   Design Research & Methodology
